@@ -1,0 +1,34 @@
+version: "3.4"
+services:
+  vaultwarden:
+  # container_name: vaultwarden
+    restart: unless-stopped
+    image: vaultwarden/server:latest
+    environment:
+      - DOMAIN=https://vault.mydomain.com
+      - SMTP_HOST=smtp.office365.com
+      - SMTP_FROM=noreply@mydomain.com
+      - SMTP_FROM_NAME='My Vaultwarden"
+      - SMTP_PORT=25
+      - SMTP_SECURITY=off
+      - ADMIN_TOKEN=xxxsecret,meh,xxxsecret123
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/nfs/swarm/dockervolumes/vaultwarden:/data
+    networks:
+      - traefik
+    ports:
+      - "8082:80"
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.vault.tls=true"
+        - "traefik.http.routers.vault.rule=Host(`vault.mydomain.com`)"
+        - "traefik.http.services.vault.loadbalancer.server.port=80"
+        - "traefik.http.routers.vault.entrypoints=websecure"
+        - "traefik.http.routers.vault.tls.certresolver=myresolver"
+
+networks:
+  traefik:
+    external: true
