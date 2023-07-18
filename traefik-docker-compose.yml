@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:v2.9
+    command:
+      - "--log.level=INFO"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.network=traefik"
+      - "--certificatesresolvers.le.acme.email=user@meh.com"
+      - "--certificatesresolvers.le.acme.storage=/certs/acme.json"
+      - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=hurricane"
+        #      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--log.filePath=/log/traefik.log"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "443:443"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/mnt/nfs/swarm/dockervolumes/traefik/certs:/certs"
+      - "/mnt/nfs/swarm/dockervolumes/traefik:/log"
+    networks:
+      - traefik
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    environment:
+      - "HURRICANE_TOKENS=sub.mydomain.com:xxx_secret_he_url_token"
+networks:
+  traefik:
+    external: true
